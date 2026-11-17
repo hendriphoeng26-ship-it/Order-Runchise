@@ -1,0 +1,727 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rekap Order Runchise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<style>
+  :root{
+    --paper:#F6F7F1; --panel:#E9EDE1; --panel-2:#DFE5D4;
+    --rule:#C3CDB4; --rule-soft:#DCE2D0;
+    --ink:#22271C; --ink-soft:#5D6653; --ink-faint:#8A9280;
+    --pen:#1F4E79; --pen-soft:#E1EAF3;
+    --stamp:#9E2B1E; --mess:#4A6B21;
+    --ok:#3D6B32;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#15180F; --panel:#1F2318; --panel-2:#272C1E;
+      --rule:#3C4431; --rule-soft:#2C3223;
+      --ink:#E8EBDF; --ink-soft:#A9B199; --ink-faint:#79816B;
+      --pen:#8BB8E0; --pen-soft:#1C2A36;
+      --stamp:#E08575; --mess:#A8C77A;
+      --ok:#8CC07C;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#15180F; --panel:#1F2318; --panel-2:#272C1E;
+    --rule:#3C4431; --rule-soft:#2C3223;
+    --ink:#E8EBDF; --ink-soft:#A9B199; --ink-faint:#79816B;
+    --pen:#8BB8E0; --pen-soft:#1C2A36;
+    --stamp:#E08575; --mess:#A8C77A;
+    --ok:#8CC07C;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size:15px; line-height:1.55;
+    font-variant-numeric:tabular-nums;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1020px; margin:0 auto; padding:40px 20px 80px}
+
+  header.masthead{
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px; margin-bottom:28px;
+    display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px 24px; justify-content:space-between;
+  }
+  h1{
+    font-family:"Instrument Serif", Georgia, serif;
+    font-weight:400; font-size:clamp(34px,6vw,52px); line-height:1;
+    margin:0; letter-spacing:-.01em;
+  }
+  .sub{color:var(--ink-soft); margin:8px 0 0; max-width:56ch}
+  .periode{
+    font-family:"Instrument Serif", Georgia, serif; font-style:italic;
+    font-size:20px; color:var(--ink-soft); white-space:nowrap;
+  }
+
+  .slots{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:26px}
+  @media (max-width:680px){ .slots{grid-template-columns:1fr} }
+
+  .slot{
+    background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+    padding:18px 18px 16px; min-height:138px;
+    display:flex; flex-direction:column; gap:6px;
+    transition:background .12s ease, border-color .12s ease;
+  }
+  .slot.filled{border-color:var(--ok); background:var(--panel-2)}
+  .slot h2{font-size:13px; font-weight:700; margin:0}
+  .slot .tag{font-size:12px; color:var(--ink-faint); font-weight:400}
+  .slot p{margin:0; color:var(--ink-soft); font-size:13.5px}
+  .slot .fname{margin-top:auto; font-size:13.5px; color:var(--ok); font-weight:500; overflow-wrap:anywhere}
+  .slot .waiting{margin-top:auto; font-size:13.5px; color:var(--ink-faint)}
+
+  .drop{
+    border:1.5px dashed var(--rule); border-radius:3px;
+    background:transparent; padding:26px 20px; text-align:center;
+    color:var(--ink-soft); margin-bottom:26px; cursor:pointer; position:relative;
+  }
+  .drop.over{border-color:var(--pen); background:var(--pen-soft); color:var(--ink)}
+  .drop strong{color:var(--pen); font-weight:700}
+  .drop input{position:absolute; width:1px; height:1px; opacity:0; pointer-events:none}
+  .drop:focus-visible{outline:2px solid var(--pen); outline-offset:3px}
+
+  .note{
+    font-size:13.5px; color:var(--ink-soft); background:var(--panel);
+    border-left:3px solid var(--rule); padding:10px 14px; margin:0 0 14px; border-radius:0 3px 3px 0;
+  }
+  .note.warn{border-left-color:var(--stamp); color:var(--ink)}
+  .notes{margin-bottom:12px}
+
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  caption{text-align:left; font-family:"Instrument Serif",Georgia,serif; font-size:24px; padding-bottom:10px}
+  th{
+    text-align:left; font-weight:500; font-size:12.5px; color:var(--ink-soft);
+    border-bottom:1px solid var(--ink); padding:6px 10px 6px 0;
+  }
+  th.n, td.n{text-align:right; padding-right:0; padding-left:10px}
+  td{padding:7px 10px 7px 0; border-bottom:1px solid var(--rule-soft)}
+  tbody tr:hover td{background:var(--panel)}
+  td.outlet{font-weight:500}
+  td.gasqty{color:var(--stamp)}
+  td.messval{color:var(--mess)}
+  .zero{color:var(--ink-faint)}
+  tfoot td{border-top:2px solid var(--ink); border-bottom:none; font-weight:700; padding-top:10px}
+  .tablewrap{overflow-x:auto; margin-bottom:26px}
+
+  .actions{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+  button.save{
+    font:inherit; font-weight:700; font-size:15px;
+    background:var(--pen); color:var(--paper); border:none; border-radius:3px;
+    padding:13px 26px; cursor:pointer;
+  }
+  button.save:disabled{background:var(--rule); color:var(--ink-faint); cursor:not-allowed}
+  button.save:focus-visible{outline:2px solid var(--ink); outline-offset:2px}
+  .status{font-size:13.5px; color:var(--ink-soft)}
+  .status.err{color:var(--stamp)}
+  .status.ok{color:var(--ok)}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <h1>Rekap Order Runchise</h1>
+      <p class="sub">Susun file Order_Runchise bulanan dari ekspor Runchise: order dikelompokkan per outlet, dengan tabung gas dan belanja mess ditarik keluar jadi barisnya sendiri.</p>
+    </div>
+    <div class="periode" id="periode"></div>
+  </header>
+
+  <div class="slots">
+    <div class="slot" id="slot-detail">
+      <h2>Ekspor per produk <span class="tag">wajib</span></h2>
+      <p>Detail Pesanan = Tampilkan Produk. Dari sini diambil tabung gas, belanja mess, dan — kalau tidak ada file ringkasan — daftar ordernya juga.</p>
+      <div class="waiting" id="name-detail">Belum ada file</div>
+    </div>
+    <div class="slot" id="slot-ring">
+      <h2>Ekspor ringkasan <span class="tag">opsional</span></h2>
+      <p>Detail Pesanan = Ringkasan. Satu-satunya sumber kolom Status Pembayaran; tanpa file ini kolom itu dikosongkan.</p>
+      <div class="waiting" id="name-ring">Belum ada file</div>
+    </div>
+  </div>
+
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Pilih atau lepaskan file Excel">
+    Lepaskan file <code>.xlsx</code> di sini, atau <strong>pilih dari perangkat</strong>.
+    Urutannya bebas — jenis ekspornya dikenali dari isi file.
+    <input type="file" id="picker" accept=".xlsx" multiple>
+  </div>
+
+  <div class="notes" id="notes"></div>
+
+  <div class="tablewrap hidden" id="preview">
+    <table>
+      <caption>Yang akan ditulis ke workbook</caption>
+      <thead>
+        <tr>
+          <th>Outlet</th>
+          <th class="n">Order</th>
+          <th class="n">Subtotal pesanan</th>
+          <th class="n">Tabung</th>
+          <th class="n">Nilai gas</th>
+          <th class="n">Belanja mess</th>
+          <th class="n">Sisa</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <tfoot id="tfoot"></tfoot>
+    </table>
+  </div>
+
+  <div class="actions">
+    <button class="save" id="save" disabled>Unduh workbook</button>
+    <span class="status" id="status">Menunggu ekspor per produk.</span>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli",
+               "Agustus","September","Oktober","November","Desember"];
+  var NUM  = '#,##0.00';
+  var ACC  = '_-* #,##0.00_-;\\-* #,##0.00_-;_-* "-"??_-;_-@_-';
+  var ACC0 = '_-* #,##0_-;\\-* #,##0_-;_-* "-"??_-;_-@_-';
+  var FILL_GAS  = 'FCD5B4';
+  var FILL_MESS = 'D8E4BC';
+  var WIDTHS = {A:25.75, C:15.75, F:20.375, G:15.75, J:13.5, K:16.25};
+
+  // Baris produk dikenali sebagai gas / mess dari nama itemnya.
+  var RE_GAS  = /tabung\s*gas/i;
+  var RE_MESS = /^mess\s*-/i;
+
+  var state = {detail:null, ringkasan:null, model:null};
+
+  var el = function(id){ return document.getElementById(id); };
+  var fmt = function(n){
+    return n.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+  };
+
+  // ---------- membaca sel ----------
+  function raw(cell){
+    var v = cell ? cell.value : null;
+    if (v === null || v === undefined) return null;
+    if (typeof v === 'object'){
+      if (v.result !== undefined) return v.result;
+      if (v.richText) return v.richText.map(function(t){return t.text;}).join('');
+      if (v.text !== undefined) return v.text;
+      if (v instanceof Date) return v;
+    }
+    return v;
+  }
+  function txt(cell){ var v = raw(cell); return v === null ? '' : String(v).trim(); }
+  function num(cell){
+    var v = raw(cell);
+    if (v === null || v === '' || v === '-') return null;
+    if (typeof v === 'number') return v;
+    var n = parseFloat(String(v).replace(/[^0-9.\-]/g,''));
+    return isNaN(n) ? null : n;
+  }
+
+  function findHeader(ws){
+    var limit = Math.min(ws.rowCount, 40);
+    for (var r = 1; r <= limit; r++){
+      if (txt(ws.getRow(r).getCell(1)) === 'Tanggal Orderan') return r;
+    }
+    return 0;
+  }
+  function headerMap(ws, hr){
+    var map = {}, row = ws.getRow(hr);
+    for (var c = 1; c <= 40; c++){
+      var t = txt(row.getCell(c));
+      if (t && !map[t]) map[t] = c;
+    }
+    return map;
+  }
+  function classify(ws){
+    var hr = findHeader(ws);
+    if (!hr) return null;
+    var map = headerMap(ws, hr);
+    var kind = (map['Item'] && map['Qty'] && map['Harga per Unit']) ? 'detail' : 'ringkasan';
+    return {ws:ws, hr:hr, map:map, kind:kind};
+  }
+  function metaBlock(p){
+    var out = [];
+    for (var i = 1; i < p.hr; i++){
+      var rr = p.ws.getRow(i);
+      out.push([raw(rr.getCell(1)), raw(rr.getCell(2))]);
+    }
+    return out;
+  }
+
+  // ---------- ekspor ringkasan ----------
+  function parseRingkasan(p){
+    var ws = p.ws, m = p.map, rows = [];
+    for (var r = p.hr + 1; r <= ws.rowCount; r++){
+      var row = ws.getRow(r);
+      if (txt(row.getCell(1)).toLowerCase() === 'total') break;
+      var no = txt(row.getCell(m['Nomor Orderan']));
+      if (!no) continue;
+      rows.push({
+        tanggal: txt(row.getCell(m['Tanggal Orderan'])),
+        nomor: no,
+        status: txt(row.getCell(m['Status Orderan'])),
+        ke: txt(row.getCell(m['Ke'])),
+        dari: txt(row.getCell(m['Dari'])),
+        bayar: m['Status Pembayaran'] ? txt(row.getCell(m['Status Pembayaran'])) : '',
+        produk: num(row.getCell(m['Total Harga Produk'])),
+        kirim: m['Biaya Pengiriman'] ? num(row.getCell(m['Biaya Pengiriman'])) : null,
+        total: num(row.getCell(m['Total Pesanan'])),
+        seq: rows.length
+      });
+    }
+    return {rows:rows, meta:metaBlock(p), headerRow:p.hr, punyaBayar:!!p.map['Status Pembayaran']};
+  }
+
+  // ---------- ekspor per produk ----------
+  function parseDetail(p){
+    var ws = p.ws, m = p.map;
+    var orders = [], gas = [], mess = [];
+    var dari = '';
+    for (var r = p.hr + 1; r <= ws.rowCount; r++){
+      var row = ws.getRow(r);
+      if (txt(row.getCell(1)).toLowerCase() === 'total') break;
+      var no = txt(row.getCell(m['Nomor Orderan']));
+      if (no){
+        dari = txt(row.getCell(m['Dari']));
+        orders.push({
+          tanggal: txt(row.getCell(m['Tanggal Orderan'])),
+          nomor: no,
+          status: txt(row.getCell(m['Status Orderan'])),
+          ke: txt(row.getCell(m['Ke'])),
+          dari: dari,
+          bayar: m['Status Pembayaran'] ? txt(row.getCell(m['Status Pembayaran'])) : '',
+          produk: num(row.getCell(m['Total Harga Produk'])),
+          kirim: m['Biaya Pengiriman'] ? num(row.getCell(m['Biaya Pengiriman'])) : null,
+          total: num(row.getCell(m['Total Pesanan'])),
+          seq: orders.length
+        });
+      }
+      var item = txt(row.getCell(m['Item']));
+      if (!item || !dari) continue;
+      var q = num(row.getCell(m['Qty']));
+      var nilai = m['Harga'] ? num(row.getCell(m['Harga'])) : null;
+      if (nilai === null){
+        var h = num(row.getCell(m['Harga per Unit']));
+        nilai = (q !== null && h !== null) ? q * h : null;
+      }
+      if (nilai === null) continue;
+      if (RE_GAS.test(item))       gas.push({dari:dari, qty:q || 0, nilai:nilai});
+      else if (RE_MESS.test(item)) mess.push({dari:dari, qty:q || 0, nilai:nilai});
+    }
+    return {orders:orders, gas:gas, mess:mess, meta:metaBlock(p), headerRow:p.hr,
+            punyaBayar:!!m['Status Pembayaran']};
+  }
+
+  // ---------- nama outlet kembar ----------
+  function buildAlias(names){
+    var lower = {};
+    names.forEach(function(n){ lower[n.toLowerCase()] = n; });
+    var alias = {};
+    names.forEach(function(n){
+      var stripped = n.replace(/^outlet\s+/i, '').trim();
+      if (stripped && stripped.toLowerCase() !== n.toLowerCase()){
+        var target = lower[stripped.toLowerCase()];
+        if (target) alias[n] = target;
+      }
+    });
+    return alias;
+  }
+  function tanggalKey(s){
+    var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
+    return m ? (m[3] + m[2] + m[1]) : s;
+  }
+
+  // ---------- meta untuk workbook keluaran ----------
+  // Keluaran selalu berbentuk ringkasan, jadi baris meta Kategori/Produk
+  // milik ekspor per produk dibuang dan Detail Pesanan ditulis "Ringkasan".
+  function metaKeluaran(meta){
+    var out = [];
+    meta.forEach(function(pair){
+      var label = String(pair[0] === null || pair[0] === undefined ? '' : pair[0]).trim();
+      if (label === 'Kategori' || label === 'Produk') return;
+      if (label === 'Detail Pesanan') out.push([pair[0], 'Ringkasan']);
+      else out.push([pair[0], pair[1]]);
+    });
+    while (out.length && (out[out.length-1][0] === null || out[out.length-1][0] === '')) out.pop();
+    out.push([null, null]);   // baris kosong sebelum baris header
+    return out;
+  }
+
+  // ---------- model ----------
+  function buildModel(){
+    var D = state.detail;
+    if (!D) return null;
+    var R = state.ringkasan;
+    var sumberOrder = R ? R.rows : D.orders;
+    var meta = metaKeluaran(R ? R.meta : D.meta);
+
+    var names = {};
+    sumberOrder.forEach(function(r){ names[r.dari] = 1; });
+    D.gas.forEach(function(g){ names[g.dari] = 1; });
+    D.mess.forEach(function(g){ names[g.dari] = 1; });
+    var alias = buildAlias(Object.keys(names));
+    var canon = function(n){ return alias[n] || n; };
+
+    var orders = sumberOrder.map(function(r){
+      var c = {}; for (var k in r) c[k] = r[k];
+      c.dari = canon(r.dari); return c;
+    });
+
+    function kumpul(list){
+      var out = {};
+      list.forEach(function(x){
+        var k = canon(x.dari);
+        if (!out[k]) out[k] = {qty:0, nilai:0, baris:0};
+        out[k].qty += x.qty; out[k].nilai += x.nilai; out[k].baris++;
+      });
+      return out;
+    }
+    var gas = kumpul(D.gas), mess = kumpul(D.mess);
+
+    var byOutlet = {};
+    orders.forEach(function(r){ (byOutlet[r.dari] = byOutlet[r.dari] || []).push(r); });
+    var outlets = Object.keys(byOutlet).sort(function(a,b){
+      return a.toLowerCase().localeCompare(b.toLowerCase(), 'id');
+    });
+    outlets.forEach(function(o){
+      byOutlet[o].sort(function(a,b){
+        var ka = tanggalKey(a.tanggal), kb = tanggalKey(b.tanggal);
+        return ka === kb ? a.seq - b.seq : (ka < kb ? -1 : 1);
+      });
+    });
+
+    var yatim = {};
+    Object.keys(gas).concat(Object.keys(mess)).forEach(function(k){
+      if (!byOutlet[k]) yatim[k] = 1;
+    });
+
+    return {
+      meta:meta, outlets:outlets, byOutlet:byOutlet, gas:gas, mess:mess,
+      alias:alias, yatim:Object.keys(yatim),
+      punyaBayar: R ? R.punyaBayar : D.punyaBayar
+    };
+  }
+
+  // ---------- pratinjau ----------
+  function renderPreview(model){
+    var tbody = el('tbody'), tfoot = el('tfoot');
+    tbody.innerHTML = ''; tfoot.innerHTML = '';
+    var tOrder = 0, tSub = 0, tQty = 0, tGas = 0, tMess = 0, tNet = 0;
+
+    model.outlets.forEach(function(o){
+      var rows = model.byOutlet[o];
+      var sub = rows.reduce(function(s,r){ return s + (r.total||0); }, 0);
+      var g = model.gas[o] || {qty:0, nilai:0};
+      var m = model.mess[o] || {nilai:0};
+      var net = sub - g.nilai - m.nilai;
+      tOrder += rows.length; tSub += sub; tQty += g.qty; tGas += g.nilai; tMess += m.nilai; tNet += net;
+
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td class="outlet"></td>' +
+        '<td class="n">' + rows.length + '</td>' +
+        '<td class="n">' + fmt(sub) + '</td>' +
+        '<td class="n ' + (g.qty ? 'gasqty' : 'zero') + '">' + (g.qty ? g.qty : '–') + '</td>' +
+        '<td class="n ' + (g.nilai ? '' : 'zero') + '">' + (g.nilai ? fmt(g.nilai) : '–') + '</td>' +
+        '<td class="n ' + (m.nilai ? 'messval' : 'zero') + '">' + (m.nilai ? fmt(m.nilai) : '–') + '</td>' +
+        '<td class="n">' + fmt(net) + '</td>';
+      tr.firstChild.textContent = o;
+      tbody.appendChild(tr);
+    });
+
+    var tf = document.createElement('tr');
+    tf.innerHTML =
+      '<td>' + model.outlets.length + ' outlet</td>' +
+      '<td class="n">' + tOrder + '</td>' +
+      '<td class="n">' + fmt(tSub) + '</td>' +
+      '<td class="n">' + tQty + '</td>' +
+      '<td class="n">' + fmt(tGas) + '</td>' +
+      '<td class="n">' + fmt(tMess) + '</td>' +
+      '<td class="n">' + fmt(tNet) + '</td>';
+    tfoot.appendChild(tf);
+    el('preview').classList.remove('hidden');
+
+    var notes = el('notes');
+    notes.innerHTML = '';
+    function addNote(teks, warn){
+      var p = document.createElement('p');
+      p.className = 'note' + (warn ? ' warn' : '');
+      p.textContent = teks;
+      notes.appendChild(p);
+    }
+    var merged = Object.keys(model.alias);
+    if (merged.length){
+      addNote('Nama outlet kembar digabung: ' +
+        merged.map(function(k){ return k + ' → ' + model.alias[k]; }).join(', ') + '.');
+    }
+    if (!model.punyaBayar){
+      addNote('Kolom Status Pembayaran dikosongkan — ekspor per produk tidak memuat kolom itu. Tambahkan ekspor ringkasan kalau kolom itu perlu terisi.');
+    }
+    if (model.yatim.length){
+      addNote('Ada tabung gas atau belanja mess dari outlet yang tidak punya order di daftar, jadi dilewati: ' +
+        model.yatim.join(', ') + '.', true);
+    }
+  }
+
+  // ---------- menulis workbook ----------
+  function styleCell(cell, opt){
+    cell.font = {name:'Arial', size:opt.size || 11, bold:!!opt.bold};
+    if (opt.fmt) cell.numFmt = opt.fmt;
+    if (opt.align) cell.alignment = {horizontal:opt.align};
+    if (opt.fill) cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF'+opt.fill}};
+  }
+
+  function buildWorkbook(model){
+    var wb = new ExcelJS.Workbook();
+    var ws = wb.addWorksheet('Sheet1');
+
+    model.meta.forEach(function(pair, i){
+      var r = i + 1;
+      if (pair[0] !== null && pair[0] !== undefined && pair[0] !== ''){
+        styleCell(ws.getCell(r,1), {bold: r === 1, size: r === 1 ? 14 : 11});
+        ws.getCell(r,1).value = pair[0];
+      }
+      if (pair[1] !== null && pair[1] !== undefined && pair[1] !== ''){
+        styleCell(ws.getCell(r,2), {});
+        ws.getCell(r,2).value = pair[1];
+      }
+    });
+
+    var HR = model.meta.length + 1;
+    var HEAD = ['Tanggal Orderan','Nomor Orderan','Status Orderan','Ke','Dari',
+                'Status Pembayaran','Total Harga Produk','Biaya Pengiriman','Total Pesanan'];
+    HEAD.forEach(function(h, i){
+      var c = i + 1;
+      ws.getCell(HR, c).value = h;
+      styleCell(ws.getCell(HR,c), {bold: c <= 6, align: c <= 6 ? 'left' : 'right'});
+    });
+
+    var r = HR + 1, first = r, lastUsed = r;
+    model.outlets.forEach(function(o){
+      var rows = model.byOutlet[o], start = r, sub = 0;
+      rows.forEach(function(d){
+        ws.getCell(r,1).value = d.tanggal;  styleCell(ws.getCell(r,1), {align:'left'});
+        ws.getCell(r,2).value = d.nomor;    styleCell(ws.getCell(r,2), {bold:true, align:'left'});
+        ws.getCell(r,3).value = d.status;   styleCell(ws.getCell(r,3), {align:'left'});
+        ws.getCell(r,4).value = d.ke;       styleCell(ws.getCell(r,4), {bold:true, align:'left'});
+        ws.getCell(r,5).value = o;          styleCell(ws.getCell(r,5), {bold:true, align:'left'});
+        if (d.bayar){ ws.getCell(r,6).value = d.bayar; styleCell(ws.getCell(r,6), {align:'left'}); }
+        if (d.produk !== null){ ws.getCell(r,7).value = d.produk; styleCell(ws.getCell(r,7), {fmt:NUM, align:'right'}); }
+        if (d.kirim  !== null){ ws.getCell(r,8).value = d.kirim;  styleCell(ws.getCell(r,8), {fmt:NUM, align:'right'}); }
+        if (d.total  !== null){ ws.getCell(r,9).value = d.total;  styleCell(ws.getCell(r,9), {fmt:NUM, align:'right'}); }
+        sub += (d.total || 0);
+        r++;
+      });
+      var sr = r - 1;
+      ws.getCell(sr,10).value = {formula:'SUM(I'+start+':I'+sr+')', result:sub};
+      styleCell(ws.getCell(sr,10), {bold:true, fmt:NUM});
+
+      var potongan = [];           // baris yang dikurangkan dari subtotal
+      var g = model.gas[o], m = model.mess[o];
+      if (g) potongan.push({label:'tabung gas sebulan ' + g.qty + ' tabung', nilai:g.nilai, fill:FILL_GAS});
+      if (m) potongan.push({label:'mess sebulan', nilai:m.nilai, fill:FILL_MESS});
+
+      if (potongan.length){
+        var barisPotongan = [];
+        potongan.forEach(function(pt){
+          ws.getCell(r,6).value = pt.label;
+          styleCell(ws.getCell(r,6), {bold:true, align:'left', fill:pt.fill});
+          ws.getCell(r,10).value = pt.nilai;
+          styleCell(ws.getCell(r,10), {bold:true, fmt:ACC0, align:'right', fill:pt.fill});
+          barisPotongan.push(r);
+          r++;
+        });
+        var akhir = r - 1;
+        var rumus = 'J' + sr + barisPotongan.map(function(x){ return '-J' + x; }).join('');
+        var hasil = potongan.reduce(function(s,pt){ return s - pt.nilai; }, sub);
+        ws.getCell(akhir,11).value = {formula:rumus, result:hasil};
+        styleCell(ws.getCell(akhir,11), {bold:true, fmt:ACC});
+        lastUsed = akhir;
+        r += 1;                    // satu baris kosong sebelum outlet berikutnya
+      } else {
+        ws.getCell(sr,11).value = {formula:'J'+sr, result:sub};
+        styleCell(ws.getCell(sr,11), {bold:true, fmt:NUM});
+        lastUsed = sr;
+        r += 2;
+      }
+    });
+
+    var tr = lastUsed + 2;
+    var sumCol = function(key){
+      var t = 0;
+      model.outlets.forEach(function(o){
+        model.byOutlet[o].forEach(function(d){ t += (d[key] || 0); });
+      });
+      return t;
+    };
+    var netTotal = 0;
+    model.outlets.forEach(function(o){
+      var sub = model.byOutlet[o].reduce(function(s,d){ return s + (d.total||0); }, 0);
+      netTotal += sub - ((model.gas[o] && model.gas[o].nilai) || 0)
+                      - ((model.mess[o] && model.mess[o].nilai) || 0);
+    });
+
+    ws.getCell(tr,1).value = 'Total'; styleCell(ws.getCell(tr,1), {bold:true, align:'left'});
+    ws.getCell(tr,4).value = 'TOTAL'; styleCell(ws.getCell(tr,4), {bold:true, align:'left'});
+    ws.getCell(tr,7).value  = {formula:'SUM(G'+first+':G'+lastUsed+')', result:sumCol('produk')};
+    styleCell(ws.getCell(tr,7), {bold:true, fmt:NUM, align:'right'});
+    ws.getCell(tr,8).value  = {formula:'SUM(H'+first+':H'+lastUsed+')', result:sumCol('kirim')};
+    styleCell(ws.getCell(tr,8), {bold:true, fmt:NUM, align:'right'});
+    ws.getCell(tr,9).value  = {formula:'SUM(I'+first+':I'+lastUsed+')', result:sumCol('total')};
+    styleCell(ws.getCell(tr,9), {bold:true, fmt:NUM, align:'right'});
+    ws.getCell(tr,11).value = {formula:'SUM(K'+HR+':K'+lastUsed+')', result:netTotal};
+    styleCell(ws.getCell(tr,11), {bold:true, fmt:ACC});
+
+    Object.keys(WIDTHS).forEach(function(col){ ws.getColumn(col).width = WIDTHS[col]; });
+    return wb;
+  }
+
+  // ---------- periode & nama file ----------
+  function periodeString(meta){
+    for (var i = 0; i < meta.length; i++){
+      if (String(meta[i][0] || '').toLowerCase() === 'periode') return String(meta[i][1] || '');
+    }
+    return '';
+  }
+  function akhirPeriode(meta){
+    return /(\d{2})\/(\d{2})\/(\d{4})\s*$/.exec(periodeString(meta).trim());
+  }
+  function namaFile(meta){
+    var m = akhirPeriode(meta);
+    return m ? ('Order_Runchise_' + BULAN[parseInt(m[2],10)-1] + '_' + m[3] + '.xlsx')
+             : 'Order_Runchise.xlsx';
+  }
+  function labelPeriode(meta){
+    var m = akhirPeriode(meta);
+    return m ? (BULAN[parseInt(m[2],10)-1] + ' ' + m[3]) : periodeString(meta);
+  }
+
+  // ---------- alur ----------
+  function setStatus(msg, kind){
+    var s = el('status');
+    s.textContent = msg;
+    s.className = 'status' + (kind ? ' ' + kind : '');
+  }
+  function fillSlot(which, filename){
+    var slot = el(which === 'detail' ? 'slot-detail' : 'slot-ring');
+    var name = el(which === 'detail' ? 'name-detail' : 'name-ring');
+    slot.classList.add('filled');
+    name.className = 'fname';
+    name.textContent = filename;
+  }
+
+  async function handleFiles(files){
+    setStatus('Membaca file…');
+    for (var i = 0; i < files.length; i++){
+      var f = files[i];
+      try {
+        var buf = await f.arrayBuffer();
+        var wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(buf);
+        var p = classify(wb.worksheets[0]);
+        if (!p){
+          setStatus('“' + f.name + '” tidak punya baris header Tanggal Orderan. Pastikan ini ekspor pesanan dari Runchise.', 'err');
+          continue;
+        }
+        if (p.kind === 'detail'){
+          state.detail = parseDetail(p);
+          fillSlot('detail', f.name);
+        } else {
+          state.ringkasan = parseRingkasan(p);
+          fillSlot('ring', f.name);
+        }
+      } catch (e){
+        setStatus('Gagal membaca “' + f.name + '”: ' + e.message, 'err');
+      }
+    }
+    refresh();
+  }
+
+  function refresh(){
+    var model = buildModel();
+    state.model = model;
+    if (!model){
+      el('save').disabled = true;
+      setStatus(state.ringkasan ? 'Tinggal ekspor per produk.' : 'Menunggu ekspor per produk.');
+      return;
+    }
+    el('periode').textContent = labelPeriode(model.meta);
+    renderPreview(model);
+    el('save').disabled = false;
+    var n = model.outlets.reduce(function(s,o){ return s + model.byOutlet[o].length; }, 0);
+    setStatus(n + ' order di ' + model.outlets.length + ' outlet siap ditulis.', 'ok');
+  }
+
+  async function save(){
+    var model = state.model;
+    if (!model) return;
+    var btn = el('save');
+    btn.disabled = true;
+    setStatus('Menyusun workbook…');
+    try {
+      var wb = buildWorkbook(model);
+      var buf = await wb.xlsx.writeBuffer();
+      var blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      var filename = namaFile(model.meta);
+
+      var downloads = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+      if (downloads){
+        await downloads.save({filename:filename, data:blob});
+      } else {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      }
+      setStatus('Tersimpan sebagai ' + filename + '.', 'ok');
+    } catch (e){
+      if (e && e.code === 'declined') setStatus('Penyimpanan dibatalkan.');
+      else setStatus('Gagal menyusun workbook: ' + ((e && e.message) || e), 'err');
+    }
+    btn.disabled = false;
+  }
+
+  // ---------- input ----------
+  var drop = el('drop'), picker = el('picker');
+  drop.addEventListener('click', function(){ picker.click(); });
+  drop.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); picker.click(); }
+  });
+  picker.addEventListener('change', function(){
+    if (picker.files.length) handleFiles(Array.prototype.slice.call(picker.files));
+    picker.value = '';
+  });
+  ['dragenter','dragover'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); });
+  });
+  drop.addEventListener('drop', function(e){
+    var files = Array.prototype.slice.call(e.dataTransfer.files).filter(function(f){
+      return /\.xlsx$/i.test(f.name);
+    });
+    if (files.length) handleFiles(files);
+    else setStatus('Hanya file .xlsx yang bisa dibaca.', 'err');
+  });
+  el('save').addEventListener('click', save);
+})();
+</script>
+</body>
+</html>
+
+</body></html>
